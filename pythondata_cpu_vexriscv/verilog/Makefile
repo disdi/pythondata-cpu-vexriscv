@@ -7,7 +7,7 @@ $(error Must init/update submodule to get VexRiscv source. Run "git submodule up
 endif
 
 VexRiscv.v: $(SRC)
-	sbt compile "runMain vexriscv.GenCoreDefault"
+	sbt compile "runMain vexriscv.GenCoreDefault --csrPluginConfig clic"
 
 VexRiscv_Debug.v: $(SRC)
 	sbt compile "runMain vexriscv.GenCoreDefault -d --hardwareBreakpointCount 2 --outputFile VexRiscv_Debug"
