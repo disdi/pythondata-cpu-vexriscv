@@ -1,6 +1,6 @@
 SRC := ${shell find . -type f -name \*.scala}
 
-all: VexRiscv.v VexRiscv_Debug.v VexRiscv_Lite.v VexRiscv_LiteDebug.v VexRiscv_LiteDebugHwBP.v VexRiscv_IMAC.v VexRiscv_IMACDebug.v VexRiscv_Min.v VexRiscv_MinDebug.v VexRiscv_MinDebugHwBP.v VexRiscv_Full.v VexRiscv_FullDebug.v VexRiscv_FullCfu.v VexRiscv_FullCfuDebug.v VexRiscv_Linux.v VexRiscv_LinuxDebug.v VexRiscv_LinuxNoDspFmax.v VexRiscv_Secure.v VexRiscv_SecureDebug.v
+all: VexRiscv.v VexRiscv_Debug.v VexRiscv_Lite.v VexRiscv_LiteDebug.v VexRiscv_LiteDebugHwBP.v VexRiscv_IMAC.v VexRiscv_IMACDebug.v VexRiscv_Min.v VexRiscv_MinDebug.v VexRiscv_MinDebugHwBP.v VexRiscv_Full.v VexRiscv_FullDebug.v VexRiscv_FullCfu.v VexRiscv_FullCfuDebug.v VexRiscv_Linux.v VexRiscv_LinuxDebug.v VexRiscv_LinuxNoDspFmax.v VexRiscv_Secure.v VexRiscv_SecureDebug.v VexRiscv_Clic.v
 
 ifeq (,$(wildcard ext/VexRiscv/.github))
 $(error Must init/update submodule to get VexRiscv source. Run "git submodule update --init")
@@ -8,6 +8,9 @@ endif
 
 VexRiscv.v: $(SRC)
 	sbt compile "runMain vexriscv.GenCoreDefault"
+
+VexRiscv_Clic.v: $(SRC)
+	sbt compile "runMain vexriscv.GenCoreDefault --csrPluginConfig clic --outputFile VexRiscv_Clic"
 
 VexRiscv_Debug.v: $(SRC)
 	sbt compile "runMain vexriscv.GenCoreDefault -d --hardwareBreakpointCount 2 --outputFile VexRiscv_Debug"

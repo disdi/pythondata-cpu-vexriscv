@@ -226,6 +226,8 @@ object GenCoreDefault{
             case "linux" => CsrPluginConfig.linuxFull(mtVecInit = argConfig.machineTrapVector).copy(ebreakGen = false)
             case "linux-minimal" => CsrPluginConfig.linuxMinimal(mtVecInit = argConfig.machineTrapVector).copy(ebreakGen = false)
             case "secure" => CsrPluginConfig.secure(argConfig.machineTrapVector)
+            case "clic" => CsrPluginConfig.small(mtvecInit = argConfig.machineTrapVector).copy(mtvecAccess = WRITE_ONLY, ecallGen = true, wfiGenAsNop = true, clicSupport = true)
+            case "linux-clic" => CsrPluginConfig.linuxFull(mtVecInit = argConfig.machineTrapVector).copy(ebreakGen = false, clicSupport = true)
           }).copy(xtvecModeGen = argConfig.xtvecModeGen)
         ),
         new YamlPlugin(argConfig.outputFile.concat(".yaml"))
@@ -249,14 +251,33 @@ object GenCoreDefault{
         }
       }
 
-      if(argConfig.externalInterruptArray) plugins ++= List(
-        new ExternalInterruptArrayPlugin(
-          machineMaskCsrId = 0xBC0,
-          machinePendingsCsrId = 0xFC0,
-          supervisorMaskCsrId = 0x9C0,
-          supervisorPendingsCsrId = 0xDC0
-        )
-      )
+      // External interrupt array handling
+      // Allow ExternalInterruptArrayPlugin to coexist with CLIC
+      // Both mechanisms will work together, with CLIC having priority for its interrupts
+      if(argConfig.externalInterruptArray) {
+        if(argConfig.csrPluginConfig.contains("clic")) {
+          // When CLIC is enabled, use different CSR addresses to avoid conflict
+          // CLIC uses 0xFC0 for MCLAIMI, so we move pending CSR to 0xFC2
+          plugins ++= List(
+            new ExternalInterruptArrayPlugin(
+              machineMaskCsrId = 0xBC0,
+              machinePendingsCsrId = 0xFC2,  // Changed from 0xFC0 to avoid CLIC conflict
+              supervisorMaskCsrId = 0x9C0,
+              supervisorPendingsCsrId = 0xDC0
+            )
+          )
+        } else {
+          // Standard CSR addresses when CLIC is not enabled
+          plugins ++= List(
+            new ExternalInterruptArrayPlugin(
+              machineMaskCsrId = 0xBC0,
+              machinePendingsCsrId = 0xFC0,
+              supervisorMaskCsrId = 0x9C0,
+              supervisorPendingsCsrId = 0xDC0
+            )
+          )
+        }
+      }
 
       // Add in the Debug plugin, if requested
       if(argConfig.debug) {
